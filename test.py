@@ -3,12 +3,13 @@ load_dotenv()
 
 import code
 import os
-from paperqa import Docs
+from paperqa.docs import Docs
 import re
+import asyncio
 
 d = Docs()
 
-IGNORE_DIRS = set(['venv', 'node_modules'])
+IGNORE_DIRS = set(['venv', 'node_modules', 'data'])
 RX_IGNORE = re.compile(r'(^\..*)|(.*\.pyc$)')
 for code_dir in ['.']:
     for dirpath, dirnames, filenames in os.walk(code_dir, topdown=True):
@@ -20,10 +21,16 @@ for code_dir in ['.']:
             print("Adding", path)
             d.add(path, citation=path, key=path)
 
-a = d.query("What does this codebase do?")
+a = asyncio.get_event_loop().run_until_complete(
+    d.aquery(
+        "What does this codebase do?",
+    )
+)
+
 print(len(a.contexts), 'contexts')
 print('Cost:', a.cost, 'Tokens:', a.tokens)
 print(a.formatted_answer)
+print(a.context)
 
 code.interact(local=locals(), banner="""
 Welcome to the PaperQA REPL! Try this:
